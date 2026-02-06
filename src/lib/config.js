@@ -4,7 +4,14 @@ const LS_KEYS = {
   token: 'token',
 };
 
+const ENV_BASE =
+  typeof import.meta !== 'undefined'
+    ? import.meta.env?.VITE_API_BASE || import.meta.env?.VITE_BACKEND_URL
+    : null;
+
 export function getBaseUrl() {
+  const envBase = ENV_BASE && ENV_BASE.trim();
+  if (envBase) return envBase;
   if (typeof window === 'undefined') return 'http://localhost:8080'; // SSR-safe default
   return localStorage.getItem(LS_KEYS.baseUrl) || 'http://localhost:8080';
 }
