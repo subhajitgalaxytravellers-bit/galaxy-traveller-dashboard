@@ -1,88 +1,134 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Header } from "@/components/Header";
-import { IconEye, IconEyeClosed, IconHierarchy3 } from "@tabler/icons-react";
-import api from "@/lib/api";
-import { toast } from "react-toastify";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Header } from '@/components/Header';
+import { IconEye, IconEyeClosed, IconHierarchy3 } from '@tabler/icons-react';
+import api from '@/lib/api';
+import { toast } from 'react-toastify';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
-import PermButton from "@/components/guard/PermButton";
-import ExportDialog from "@/components/dialogs/ExportDialog";
+} from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
+import PermButton from '@/components/guard/PermButton';
+import ExportDialog from '@/components/dialogs/ExportDialog';
 
 export default function SettingsPage() {
   const [tracking, setTracking] = useState({
-    gtmId: "",
-    fbPixel: "",
-    extraScripts: "",
+    gtmId: '',
+    fbPixel: '',
+    extraScripts: '',
   });
   const [whatsapp, setWhatsapp] = useState({
     enabled: false,
-    number: "",
-    message: "",
-    position: "bottom-right",
+    number: '',
+    message: '',
+    position: 'bottom-right',
   });
   const [smtp, setSmtp] = useState({
-    host: "",
+    host: '',
     port: 587,
-    username: "",
-    password: "",
-    encryption: "tls",
-    fromName: "",
-    fromEmail: "",
+    username: '',
+    password: '',
+    encryption: 'tls',
+    fromName: '',
+    fromEmail: '',
   });
   const [footerContact, setFooterContact] = useState({
-    contact1: "",
-    contact2: "",
-    email: "",
-    location: "",
-    brief: "",
+    contact1: '',
+    contact2: '',
+    email: '',
+    location: '',
+    brief: '',
   });
 
   const [emailMessages, setEmailMessages] = useState({
-    otp: { subject: "", body: "" },
-    attachment: { subject: "", body: "" },
-    status: { subject: "", body: "" },
-    coupon_generic: { subject: "", body: "" },
+    otp: { subject: '', body: '' },
+    attachment: { subject: '', body: '' },
+    status: { subject: '', body: '' },
+    coupon_generic: { subject: '', body: '' },
   });
 
   const [razorpay, setRazorpay] = useState({
-    keyId: "",
-    keySecret: "",
+    keyId: '',
+    keySecret: '',
+  });
+  const [invoice, setInvoice] = useState({
+    logoUrl: '',
+    companyName: '',
+    companyAddress: '',
+    companyGST: '',
+    companyState: '',
+    companyStateCode: '',
+    companyPAN: '',
+    companyEmail: '',
+    companyPhone: '',
+    placeOfSupply: '',
+    gstRate: '',
+    sacCode: '',
+    termsAndConditions: '',
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [testEmail, setTestEmail] = useState("");
+  const [testEmail, setTestEmail] = useState('');
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [isSend, setIsSend] = useState(false);
 
   const [openExport, setOpenExport] = useState(false);
 
+  const extractSettingsData = (payload) => {
+    // Supports both:
+    // 1) { key: 'global', data: {...} }
+    // 2) { success: true, data: { key: 'global', data: {...} } }
+    const root = payload?.data;
+    if (!root || typeof root !== 'object') return {};
+    if (
+      root.data &&
+      typeof root.data === 'object' &&
+      root.data.data &&
+      typeof root.data.data === 'object'
+    ) {
+      return root.data.data;
+    }
+    if (root.data && typeof root.data === 'object') {
+      return root.data;
+    }
+    return root;
+  };
+
+  const invoiceRequired = [
+    { key: 'companyName', label: 'Company Name' },
+    { key: 'companyGST', label: 'Company GSTIN' },
+    { key: 'companyState', label: 'Company State' },
+    { key: 'companyStateCode', label: 'Company State Code' },
+    { key: 'gstRate', label: 'GST %' },
+  ];
+  const missingInvoiceRequired = invoiceRequired.filter(
+    (item) => !String(invoice[item.key] || '').trim(),
+  );
+
   const updateEmailMessages = async () => {
     try {
-      await api().put("/api/emailMessages", emailMessages);
-      toast.success("Email messages updated!");
+      await api().put('/api/emailMessages', emailMessages);
+      toast.success('Email messages updated!');
     } catch (err) {
       toast.error(err.message);
     }
@@ -92,206 +138,222 @@ export default function SettingsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res1 = await api().get("/api/settings");
+        const res1 = await api().get('/api/settings');
         // console.log(res1.data);
 
-        if (res1.data?.data) {
-          setTracking(res1.data.data.tracking || {});
-          setWhatsapp(res1.data.data.whatsapp || {});
-          setFooterContact(res1.data.data.footerContact || {});
-          setRazorpay(res1.data.data.razorpay || {});
+        let settingsData = extractSettingsData(res1);
+        if (Object.keys(settingsData).length === 0) {
+          try {
+            const res1b = await api().get('/api/settings/global');
+            settingsData = extractSettingsData(res1b);
+          } catch {
+            // ignore fallback miss
+          }
         }
-        const res2 = await api().get("/api/smtp-settings");
+        if (Object.keys(settingsData).length > 0) {
+          setTracking((prev) => ({ ...prev, ...(settingsData.tracking || {}) }));
+          setWhatsapp((prev) => ({ ...prev, ...(settingsData.whatsapp || {}) }));
+          setFooterContact((prev) => ({
+            ...prev,
+            ...(settingsData.footerContact || {}),
+          }));
+          setRazorpay((prev) => ({ ...prev, ...(settingsData.razorpay || {}) }));
+          setInvoice((prev) => ({
+            ...prev,
+            ...(settingsData.invoice || {}),
+          }));
+        }
+        const res2 = await api().get('/api/smtp-settings');
         if (res2.data) setSmtp(res2.data);
 
-        const res4 = await api().get("/api/emailMessages");
+        const res4 = await api().get('/api/emailMessages');
 
-        console.log("emailMessages", res4.data);
-        if (res4.data)
-          setEmailMessages((prev) => ({ ...prev, ...res4.data }));
+        console.log('emailMessages', res4.data);
+        if (res4.data) setEmailMessages((prev) => ({ ...prev, ...res4.data }));
       } catch (e) {
         toast.error(`${e.message}`);
 
-        console.error("Failed to load settings", e);
+        console.error('Failed to load settings', e);
       }
     })();
   }, []);
 
   const updateTracking = async () => {
-    await api().put("/api/settings/global", { data: { tracking } });
-    toast.success("Tracking settings updated!");
+    await api().put('/api/settings/global', { data: { tracking } });
+    toast.success('Tracking settings updated!');
   };
 
   const updateWhatsapp = async () => {
-    await api().put("/api/settings/global", { data: { whatsapp } });
-    toast.success("WhatsApp settings updated!");
+    await api().put('/api/settings/global', { data: { whatsapp } });
+    toast.success('WhatsApp settings updated!');
   };
 
   const updateSmtp = async () => {
-    await api().put("/api/smtp-settings", smtp);
-    toast.success("SMTP settings updated!");
+    await api().put('/api/smtp-settings', smtp);
+    toast.success('SMTP settings updated!');
   };
 
   const updateFooterContact = async () => {
-    await api().put("/api/settings/global", { data: { footerContact } });
-    toast.success("Footer contact settings updated!");
+    await api().put('/api/settings/global', { data: { footerContact } });
+    toast.success('Footer contact settings updated!');
   };
 
   const updateRazorpay = async () => {
-    await api().put("/api/settings/global", { data: { razorpay } });
-    toast.success("Razorpay settings updated!");
+    await api().put('/api/settings/global', { data: { razorpay } });
+    toast.success('Razorpay settings updated!');
+  };
+
+  const updateInvoice = async () => {
+    await api().put('/api/settings/global', { data: { invoice } });
+    toast.success('Invoice settings updated!');
   };
 
   const sendTestEmail = async () => {
     try {
       setIsSend(true);
-      const response = await api().post("/api/smtp-settings/send-test-email", {
+      const response = await api().post('/api/smtp-settings/send-test-email', {
         email: testEmail,
         smtpSettings: smtp,
       });
       if (response.data.success) {
-        toast.success("Test email sent successfully!");
+        toast.success('Test email sent successfully!');
         setTestModalOpen(false); // Close modal on success
       }
     } catch (error) {
-      console.error("Error sending test email:", error);
-      toast.error("Failed to send test email.");
+      console.error('Error sending test email:', error);
+      toast.error('Failed to send test email.');
     } finally {
       setIsSend(false);
     }
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className='h-screen flex flex-col'>
       <Header
-        title="Settings"
+        title='Settings'
         right={
           <PermButton
-            className="flex items-center gap-2 bg-gray-700 dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
+            className='flex items-center gap-2 bg-gray-700 dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200'
             onClick={() => setOpenExport(true)}
-            model="settings"
-            action="update"
-          >
-            <IconHierarchy3 className="h-4 w-4" />
+            model='settings'
+            action='update'>
+            <IconHierarchy3 className='h-4 w-4' />
             Export Data
           </PermButton>
         }
       />
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className='flex-1 overflow-y-auto p-4'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
           {/* Tracking Card */}
-          <Card className="border border-gray-200 dark:border-gray-900">
+          <Card className='border border-gray-200 dark:border-gray-900'>
             <CardHeader>
               <CardTitle>Tracking</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className='flex flex-col gap-3'>
               <Input
-                placeholder="Google Tag Manager ID"
-                value={tracking.gtmId || ""}
+                placeholder='Google Tag Manager ID'
+                value={tracking.gtmId || ''}
                 onChange={(e) =>
                   setTracking({ ...tracking, gtmId: e.target.value })
                 }
               />
               <Input
-                placeholder="Facebook Pixel ID"
-                value={tracking.fbPixel || ""}
+                placeholder='Facebook Pixel ID'
+                value={tracking.fbPixel || ''}
                 onChange={(e) =>
                   setTracking({ ...tracking, fbPixel: e.target.value })
                 }
               />
               <Textarea
-                placeholder="Extra Scripts"
-                className="w-full"
-                value={tracking.extraScripts || ""}
+                placeholder='Extra Scripts'
+                className='w-full'
+                value={tracking.extraScripts || ''}
                 onChange={(e) =>
                   setTracking({ ...tracking, extraScripts: e.target.value })
                 }
               />
             </CardContent>
-            <CardFooter className={"w-full mt-auto"}>
+            <CardFooter className={'w-full mt-auto'}>
               <PermButton
-                model="settings"
-                action="update"
+                model='settings'
+                action='update'
                 onClick={updateTracking}
-                className="w-full"
-              >
+                className='w-full'>
                 Update
               </PermButton>
             </CardFooter>
           </Card>
 
           {/* WhatsApp Card */}
-          <Card className="border border-gray-200 dark:border-gray-900">
+          <Card className='border border-gray-200 dark:border-gray-900'>
             <CardHeader>
               <CardTitle>WhatsApp CTA</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className='flex flex-col gap-3'>
               <Input
-                placeholder="WhatsApp Number"
-                value={whatsapp.number || ""}
+                placeholder='WhatsApp Number'
+                value={whatsapp.number || ''}
                 onChange={(e) =>
                   setWhatsapp({ ...whatsapp, number: e.target.value })
                 }
               />
               <Input
-                placeholder="Message Text"
-                value={whatsapp.message || ""}
+                placeholder='Message Text'
+                value={whatsapp.message || ''}
                 onChange={(e) =>
                   setWhatsapp({ ...whatsapp, message: e.target.value })
                 }
               />
             </CardContent>
-            <CardFooter className={"w-full mt-auto"}>
+            <CardFooter className={'w-full mt-auto'}>
               <PermButton
-                model="settings"
-                action="update"
+                model='settings'
+                action='update'
                 onClick={updateWhatsapp}
-                className="w-full"
-              >
+                className='w-full'>
                 Update
               </PermButton>
             </CardFooter>
           </Card>
 
           {/* SMTP Card */}
-          <Card className="border border-gray-200 dark:border-gray-900">
+          <Card className='border border-gray-200 dark:border-gray-900'>
             <CardHeader>
               <CardTitle>SMTP Config</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className='flex flex-col gap-3'>
               <Input
-                placeholder="SMTP Host"
-                value={smtp.host || ""}
+                placeholder='SMTP Host'
+                value={smtp.host || ''}
                 onChange={(e) => setSmtp({ ...smtp, host: e.target.value })}
               />
               <Input
-                placeholder="SMTP Port"
-                type="number"
-                value={smtp.port || ""}
+                placeholder='SMTP Port'
+                type='number'
+                value={smtp.port || ''}
                 onChange={(e) =>
                   setSmtp({ ...smtp, port: parseInt(e.target.value) })
                 }
               />
               <Input
-                placeholder="SMTP Username (your email/from email)"
-                value={smtp.username || ""}
+                placeholder='SMTP Username (your email/from email)'
+                value={smtp.username || ''}
                 onChange={(e) => setSmtp({ ...smtp, username: e.target.value })}
               />
-              <div className="relative">
+              <div className='relative'>
                 <Input
-                  placeholder="SMTP Password"
-                  type={showPassword ? "text" : "password"}
-                  value={smtp.password || ""}
+                  placeholder='SMTP Password'
+                  type={showPassword ? 'text' : 'password'}
+                  value={smtp.password || ''}
                   onChange={(e) =>
                     setSmtp({ ...smtp, password: e.target.value })
                   }
-                  className="pr-10"
+                  className='pr-10'
                 />
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900"
-                >
+                  className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900'>
                   {showPassword ? (
                     <IconEyeClosed size={18} />
                   ) : (
@@ -300,63 +362,60 @@ export default function SettingsPage() {
                 </button>
               </div>
               <Input
-                placeholder="From Name"
-                value={smtp.fromName || ""}
+                placeholder='From Name'
+                value={smtp.fromName || ''}
                 onChange={(e) => setSmtp({ ...smtp, fromName: e.target.value })}
               />
               <Input
-                placeholder="From Email"
-                value={smtp.fromEmail || ""}
+                placeholder='From Email'
+                value={smtp.fromEmail || ''}
                 onChange={(e) =>
                   setSmtp({ ...smtp, fromEmail: e.target.value })
                 }
               />
               <Select
                 value={smtp.encryption}
-                onValueChange={(v) => setSmtp({ ...smtp, encryption: v })}
-              >
+                onValueChange={(v) => setSmtp({ ...smtp, encryption: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Encryption" />
+                  <SelectValue placeholder='Encryption' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="ssl">SSL</SelectItem>
-                  <SelectItem value="tls">TLS</SelectItem>
+                  <SelectItem value='none'>None</SelectItem>
+                  <SelectItem value='ssl'>SSL</SelectItem>
+                  <SelectItem value='tls'>TLS</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>
 
-            <CardFooter className={"w-full mt-auto px-8"}>
-              <div className="w-1/2 px-1.5">
+            <CardFooter className={'w-full mt-auto px-8'}>
+              <div className='w-1/2 px-1.5'>
                 <PermButton
-                  model="settings"
-                  action="update"
-                  className={"w-full"}
-                  onClick={updateSmtp}
-                >
+                  model='settings'
+                  action='update'
+                  className={'w-full'}
+                  onClick={updateSmtp}>
                   Update
                 </PermButton>
               </div>
-              <div className="w-1/2 px-1.5">
+              <div className='w-1/2 px-1.5'>
                 <Button
                   onClick={() => setTestModalOpen(true)} // Open test email dialog
-                  className="w-full"
-                >
+                  className='w-full'>
                   Test SMTP
                 </Button>
               </div>
             </CardFooter>
           </Card>
 
-          <Card className="border border-gray-200  w-full dark:border-gray-900">
+          <Card className='border border-gray-200  w-full dark:border-gray-900'>
             <CardHeader>
               <CardTitle>Email OTP Message</CardTitle>
             </CardHeader>
-            <CardContent className="flex max-md:flex-col gap-6">
+            <CardContent className='flex max-md:flex-col gap-6'>
               {/* OTP Message */}
-              <div className="w-full">
+              <div className='w-full'>
                 <Input
-                  placeholder="Subject"
+                  placeholder='Subject'
                   value={emailMessages.otp.subject}
                   onChange={(e) =>
                     setEmailMessages({
@@ -366,8 +425,8 @@ export default function SettingsPage() {
                   }
                 />
                 <Textarea
-                  placeholder="Body (use {{name}} and {{otp}})"
-                  className="mt-2  h-[12rem]"
+                  placeholder='Body (use {{name}} and {{otp}})'
+                  className='mt-2  h-[12rem]'
                   value={emailMessages.otp.body}
                   onChange={(e) =>
                     setEmailMessages({
@@ -378,76 +437,74 @@ export default function SettingsPage() {
                 />
               </div>
             </CardContent>
-          <CardFooter>
-            <PermButton
-              model="settings"
-              action="update"
-              onClick={updateEmailMessages}
-              className="w-full text-white dark:text-black"
-            >
-              Update Email Messages
-            </PermButton>
-          </CardFooter>
-        </Card>
+            <CardFooter>
+              <PermButton
+                model='settings'
+                action='update'
+                onClick={updateEmailMessages}
+                className='w-full text-white dark:text-black'>
+                Update Email Messages
+              </PermButton>
+            </CardFooter>
+          </Card>
 
-        <Card className="border border-gray-200 w-full dark:border-gray-900">
-          <CardHeader>
-            <CardTitle>Coupon Email Template</CardTitle>
-          </CardHeader>
-          <CardContent className="flex max-md:flex-col gap-6">
-            <div className="w-full">
-              <Input
-                placeholder="Subject"
-                value={emailMessages.coupon_generic?.subject || ""}
-                onChange={(e) =>
-                  setEmailMessages({
-                    ...emailMessages,
-                    coupon_generic: {
-                      ...(emailMessages.coupon_generic || {}),
-                      subject: e.target.value,
-                    },
-                  })
-                }
-              />
-              <Textarea
-                placeholder="Body (HTML or text). Placeholders: {{user.name}}, {{user.email}}, {{code}}, {{discount}}, {{expires}}"
-                className="mt-2 h-[12rem]"
-                value={emailMessages.coupon_generic?.body || ""}
-                onChange={(e) =>
-                  setEmailMessages({
-                    ...emailMessages,
-                    coupon_generic: {
-                      ...(emailMessages.coupon_generic || {}),
-                      body: e.target.value,
-                    },
-                  })
-                }
-              />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <PermButton
-              model="settings"
-              action="update"
-              onClick={updateEmailMessages}
-              className="w-full text-white dark:text-black"
-            >
-              Save Coupon Template
-            </PermButton>
-          </CardFooter>
-        </Card>
+          <Card className='border border-gray-200 w-full dark:border-gray-900'>
+            <CardHeader>
+              <CardTitle>Coupon Email Template</CardTitle>
+            </CardHeader>
+            <CardContent className='flex max-md:flex-col gap-6'>
+              <div className='w-full'>
+                <Input
+                  placeholder='Subject'
+                  value={emailMessages.coupon_generic?.subject || ''}
+                  onChange={(e) =>
+                    setEmailMessages({
+                      ...emailMessages,
+                      coupon_generic: {
+                        ...(emailMessages.coupon_generic || {}),
+                        subject: e.target.value,
+                      },
+                    })
+                  }
+                />
+                <Textarea
+                  placeholder='Body (HTML or text). Placeholders: {{user.name}}, {{user.email}}, {{code}}, {{discount}}, {{expires}}'
+                  className='mt-2 h-[12rem]'
+                  value={emailMessages.coupon_generic?.body || ''}
+                  onChange={(e) =>
+                    setEmailMessages({
+                      ...emailMessages,
+                      coupon_generic: {
+                        ...(emailMessages.coupon_generic || {}),
+                        body: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <PermButton
+                model='settings'
+                action='update'
+                onClick={updateEmailMessages}
+                className='w-full text-white dark:text-black'>
+                Save Coupon Template
+              </PermButton>
+            </CardFooter>
+          </Card>
 
-          <Card className="border h-full border-gray-200  w-full dark:border-gray-900">
+          <Card className='border h-full border-gray-200  w-full dark:border-gray-900'>
             <CardHeader>
               <CardTitle>Razorpay</CardTitle>
             </CardHeader>
-            <CardContent className="flex  max-md:flex-col gap-6">
+            <CardContent className='flex  max-md:flex-col gap-6'>
               {/* OTP Message */}
-              <div className="w-full">
+              <div className='w-full'>
                 <Input
-                  placeholder="Key ID"
+                  placeholder='Key ID'
                   value={razorpay.keyId}
-                  className="mb-3"
+                  className='mb-3'
                   onChange={(e) =>
                     setRazorpay({
                       ...razorpay,
@@ -456,7 +513,7 @@ export default function SettingsPage() {
                   }
                 />
                 <Input
-                  placeholder="Key Secret"
+                  placeholder='Key Secret'
                   value={razorpay.keySecret}
                   onChange={(e) =>
                     setRazorpay({
@@ -469,25 +526,24 @@ export default function SettingsPage() {
             </CardContent>
             <CardFooter>
               <PermButton
-                model="settings"
-                action="update"
+                model='settings'
+                action='update'
                 onClick={updateRazorpay}
-                className="w-full text-white dark:text-black"
-              >
+                className='w-full text-white dark:text-black'>
                 Update Razorpay
               </PermButton>
             </CardFooter>
           </Card>
 
           {/* Footer Contact Card */}
-          <Card className="border border-gray-200 dark:border-gray-900">
+          <Card className='border border-gray-200 dark:border-gray-900'>
             <CardHeader>
               <CardTitle>Footer Contact</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className='flex flex-col gap-3'>
               <Input
-                placeholder="Contact 1"
-                value={footerContact.contact1 || ""}
+                placeholder='Contact 1'
+                value={footerContact.contact1 || ''}
                 onChange={(e) =>
                   setFooterContact({
                     ...footerContact,
@@ -496,8 +552,8 @@ export default function SettingsPage() {
                 }
               />
               <Input
-                placeholder="Contact 2"
-                value={footerContact.contact2 || ""}
+                placeholder='Contact 2'
+                value={footerContact.contact2 || ''}
                 onChange={(e) =>
                   setFooterContact({
                     ...footerContact,
@@ -506,15 +562,15 @@ export default function SettingsPage() {
                 }
               />
               <Input
-                placeholder="Email"
-                value={footerContact.email || ""}
+                placeholder='Email'
+                value={footerContact.email || ''}
                 onChange={(e) =>
                   setFooterContact({ ...footerContact, email: e.target.value })
                 }
               />
               <Input
-                placeholder="Location"
-                value={footerContact.location || ""}
+                placeholder='Location'
+                value={footerContact.location || ''}
                 onChange={(e) =>
                   setFooterContact({
                     ...footerContact,
@@ -523,21 +579,144 @@ export default function SettingsPage() {
                 }
               />
               <Textarea
-                placeholder="Brief about the Website"
-                value={footerContact.brief || ""}
+                placeholder='Brief about the Website'
+                value={footerContact.brief || ''}
                 onChange={(e) =>
                   setFooterContact({ ...footerContact, brief: e.target.value })
                 }
               />
             </CardContent>
-            <CardFooter className={"w-full mt-auto"}>
+            <CardFooter className={'w-full mt-auto'}>
               <PermButton
-                model="settings"
-                action="update"
+                model='settings'
+                action='update'
                 onClick={updateFooterContact}
-                className="w-full"
-              >
+                className='w-full'>
                 Update Footer Contact
+              </PermButton>
+            </CardFooter>
+          </Card>
+
+          <Card className='border border-gray-200 dark:border-gray-900'>
+            <CardHeader>
+              <CardTitle>Invoice Settings</CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-col gap-3'>
+              {missingInvoiceRequired.length > 0 && (
+                <div className='rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900'>
+                  Missing required fields for proper GST invoice:{' '}
+                  {missingInvoiceRequired.map((item) => item.label).join(', ')}
+                </div>
+              )}
+
+              <Input
+                placeholder='Seller Company Name'
+                value={invoice.companyName || ''}
+                onChange={(e) =>
+                  setInvoice({ ...invoice, companyName: e.target.value })
+                }
+              />
+              <Textarea
+                placeholder='Seller Company Address'
+                value={invoice.companyAddress || ''}
+                onChange={(e) =>
+                  setInvoice({ ...invoice, companyAddress: e.target.value })
+                }
+              />
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <Input
+                  placeholder='Seller GSTIN'
+                  value={invoice.companyGST || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, companyGST: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder='Seller PAN'
+                  value={invoice.companyPAN || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, companyPAN: e.target.value })
+                  }
+                />
+              </div>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <Input
+                  placeholder='Seller State'
+                  value={invoice.companyState || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, companyState: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder='Seller State Code'
+                  value={invoice.companyStateCode || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, companyStateCode: e.target.value })
+                  }
+                />
+              </div>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <Input
+                  placeholder='Seller Email'
+                  value={invoice.companyEmail || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, companyEmail: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder='Seller Phone'
+                  value={invoice.companyPhone || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, companyPhone: e.target.value })
+                  }
+                />
+              </div>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <Input
+                  placeholder='Place Of Supply (optional default)'
+                  value={invoice.placeOfSupply || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, placeOfSupply: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder='GST % (e.g. 5 or 18)'
+                  type='number'
+                  min='0'
+                  max='100'
+                  value={invoice.gstRate || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, gstRate: e.target.value })
+                  }
+                />
+              </div>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <Input
+                  placeholder='SAC Code'
+                  value={invoice.sacCode || ''}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, sacCode: e.target.value })
+                  }
+                />
+              </div>
+              <Textarea
+                placeholder='Terms and Conditions'
+                value={invoice.termsAndConditions || ''}
+                onChange={(e) =>
+                  setInvoice({
+                    ...invoice,
+                    termsAndConditions: e.target.value,
+                  })
+                }
+              />
+            </CardContent>
+            <CardFooter className={'w-full mt-auto'}>
+              <PermButton
+                model='settings'
+                action='update'
+                onClick={updateInvoice}
+                className='w-full'>
+                Update Invoice Settings
               </PermButton>
             </CardFooter>
           </Card>
@@ -546,24 +725,24 @@ export default function SettingsPage() {
 
       {/* Test Email Modal */}
       <Dialog open={testModalOpen} onOpenChange={setTestModalOpen}>
-        <DialogContent className="border-gray-300 dark:border-gray-700">
+        <DialogContent className='border-gray-300 dark:border-gray-700'>
           <DialogHeader>
             <DialogTitle>Test SMTP Settings</DialogTitle>
           </DialogHeader>
           <Input
-            placeholder="Receiver Email"
+            placeholder='Receiver Email'
             value={testEmail}
             onChange={(e) => setTestEmail(e.target.value)}
-            className="w-full mt-4"
+            className='w-full mt-4'
           />
           <DialogFooter>
             {!isSend ? (
-              <Button onClick={sendTestEmail} className="w-full mt-4">
+              <Button onClick={sendTestEmail} className='w-full mt-4'>
                 Send Test Email
               </Button>
             ) : (
-              <Button onClick={sendTestEmail} className="w-full mt-4">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+              <Button onClick={sendTestEmail} className='w-full mt-4'>
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Sending...
               </Button>
             )}
           </DialogFooter>
