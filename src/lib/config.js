@@ -4,27 +4,31 @@ const LS_KEYS = {
   token: 'token',
 };
 
-const ENV_BASE =
+/**
+ * VITE_API_BASE is baked into the bundle at build time — works fine in dist.
+ * At runtime (dist) there is no .env, so we fall back to:
+ *   1. localStorage (user-configured via Settings page)
+ *   2. Hardcoded production URL
+ */
+const BAKED_BASE =
   typeof import.meta !== 'undefined'
     ? import.meta.env?.VITE_API_BASE || import.meta.env?.VITE_BACKEND_URL
     : null;
 
+const PRODUCTION_FALLBACK = 'https://api.subhajitmondal.com';
+
 export function getBaseUrl() {
-  const envBase = ENV_BASE && ENV_BASE.trim();
-  if (envBase) return envBase;
-  if (typeof window === 'undefined') return 'http://localhost:8080'; // SSR-safe default
-  return localStorage.getItem(LS_KEYS.baseUrl) || 'http://localhost:8080';
+  // 1. Env var baked in at build time
+  const baked = BAKED_BASE && BAKED_BASE.trim();
+  if (baked) return baked.replace(/\/$/, '');
+  // 2. User-overridden via Settings page (persisted in localStorage)
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem(LS_KEYS.baseUrl);
+    if (stored) return stored.replace(/\/$/, '');
+  }
+  // 3. Hardcoded production fallback (safe for dist builds without .env)
+  return PRODUCTION_FALLBACK;
 }
-// export function getBaseUrl() {
-//   if (typeof window === 'undefined') return 'http://35.207.255.116:8080/'; // SSR-safe default
-//   return localStorage.getItem(LS_KEYS.baseUrl) || 'http://35.207.255.116:8080/';
-// }
-// export function getBaseUrl() {
-//   if (typeof window === 'undefined') return 'https://api.subhajitmondal.com/'; // SSR-safe default
-//   return (
-//     localStorage.getItem(LS_KEYS.baseUrl) || 'https://api.subhajitmondal.com/'
-//   );
-// }
 
 export function setBaseUrl(url) {
   if (typeof window === 'undefined') return;
