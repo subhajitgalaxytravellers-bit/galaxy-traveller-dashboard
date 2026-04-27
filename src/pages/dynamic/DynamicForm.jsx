@@ -557,6 +557,9 @@ export default function DynamicForm({
                   }
 
                   // Add a conditional class for full-width fields
+                  // Skip field if visibleIf condition is not met
+                  if (field.visibleIf && !field.visibleIf(values)) return null;
+
                   const fieldClass =
                     field.width === '100%' ||
                     field.key === 'heroSlide' ||

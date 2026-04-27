@@ -448,6 +448,14 @@ const uiSchemas = [
         required: true,
         minLength: 10,
         maxLength: 100,
+        label: 'Short Description',
+      },
+      descriptionLong: {
+        type: 'richtext',
+        width: '100%',
+        position: 3,
+        required: false,
+        label: 'Long Description',
       },
 
       highlight: {
@@ -1413,7 +1421,7 @@ const uiSchemas = [
         width: '50%',
         position: 20,
         required: true,
-        enumValues: ['fixed_date', 'selectable_date', 'both'],
+        enumValues: ['fixed_date', 'selectable_date', 'both', 'enquire'],
       },
       dateRange: {
         type: 'object',
@@ -1435,7 +1443,8 @@ const uiSchemas = [
         ],
         width: '100%',
         position: 22,
-        required: true,
+        required: false,
+        visibleIf: (values) => ['fixed_date', 'both'].includes(values.tourType),
       },
       status: {
         type: 'enumDropdown',

@@ -1,109 +1,56 @@
-import "react-quill/dist/quill.snow.css";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { marked } from "marked";
+import TurndownService from "turndown";
+import { gfm } from "turndown-plugin-gfm";
+import {
+  Bold,
+  Heading2,
+  List,
+  ListOrdered,
+  Quote,
+  Link2,
+  ImageIcon,
+  Eye,
+} from "lucide-react";
 import { IconPhoto } from "@tabler/icons-react";
 import ImagePickerDialog from "../images/ImagePickerDialog";
-import { useEffect, useMemo, useRef, useState } from "react";
-import ReactQuill from "react-quill";
-import { v4 as uuid } from "uuid";
-
+import BlogBody from "@/components/fields/BlogBody.jsx";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import BlogBody from "@/components/fields/BlogBody.jsx"; // <- This is the preview renderer
-
-// NEW: converters
-import TurndownService from "turndown";
-import { gfm } from "turndown-plugin-gfm";
-import { marked } from "marked";
-import { Eye } from "lucide-react";
-
-const CustomButton = ({ icon, onClick }) => (
-  <button
-    onClick={onClick}
-    className="ql-custom-btn text-black dark:text-white"
-  >
-    {icon}
-  </button>
-);
-
-const CustomToolbar = ({ onOpenImageDialog, onOpenPreview, toolbarId }) => (
-  <div id={toolbarId} className="custom-quill-toolbar">
-    {/* Only H2 + paragraph */}
-    <select
-      className="ql-header text-black dark:text-white"
-      defaultValue={""}
-      onChange={(e) => e.persist()}
-    >
-      <option
-        className="ql-custom-btn text-black dark:text-white"
-        value=""
-      ></option>{" "}
-      {/* paragraph */}
-      <option className="ql-custom-btn text-black dark:text-white" value="2">
-        {" "}
-        Header
-      </option>{" "}
-      {/* H2 only */}
-    </select>
-
-    {/* Strong only */}
-    <button className="ql-bold"></button>
-
-    {/* Blockquote */}
-    <button className="ql-blockquote"></button>
-
-    {/* Lists */}
-    <button className="ql-list" value="ordered"></button>
-    <button className="ql-list" value="bullet"></button>
-
-    {/* Link + Image */}
-    <button className="ql-link"></button>
-    <CustomButton
-      icon={<IconPhoto />}
-      onClick={onOpenImageDialog}
-      title="Insert image"
-    />
-
-    {/* PREVIEW BUTTON */}
-    <CustomButton icon={<Eye size={18} />} onClick={onOpenPreview} />
-  </div>
-);
 
 // ---------- HTML ⇄ Markdown helpers ----------
 function makeTurndown() {
   const td = new TurndownService({
-    headingStyle: "atx", // ## Headings
+    headingStyle: "atx",
     codeBlockStyle: "fenced",
-    bulletListMarker: "-", // unify bullets
+    bulletListMarker: "-",
     emDelimiter: "_",
   });
-  td.use(gfm); // tables, strikethrough, task lists
+  td.use(gfm);
 
-  // Normalize <h3> to ### etc. (Quill often uses <h1..h6>)
-  // Turndown handles headings automatically, so no custom rule needed.
-
-  // Better <img> -> ![alt](src)
   td.addRule("nextImageRule", {
     filter: "img",
     replacement: function (_, node) {
       let src = node.getAttribute("src") || "";
       let alt = node.getAttribute("alt") || "";
-
       if (!alt && src) {
         const filename = (src.split("/").pop() || "").split(".")[0];
         alt = filename.replace(/[-_]/g, " ") || "blog image";
       }
-
-      // >>> FIX: encode spaces safely <<<
       const encoded = src.replace(/ /g, "%20");
-
       return src ? `![${alt}](${encoded})` : "";
     },
   });
 
-  // Quill inserts <p><br></p> a lot; convert extra empties to single newlines
   td.addRule("trimEmptyParas", {
     filter: (node) => node.nodeName === "P" && node.innerHTML === "<br>",
     replacement: () => "\n",
@@ -115,158 +62,178 @@ function makeTurndown() {
 const tdSingleton = makeTurndown();
 
 function htmlToMarkdown(html) {
-  // Quill sometimes nests/spaces oddly; turndown copes well.
   let md = tdSingleton.turndown(html || "");
-  // Minor cleanups that help your TOC extractor:
-  md = md
-    // Ensure each <h2> becomes `##` (Turndown does it, but keep tidy spacing)
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  md = md.replace(/\n{3,}/g, "\n\n").trim();
   return md;
 }
 
-// Only for showing existing Markdown in the editor as HTML (not for saving!)
 function markdownToHtml(md) {
   return marked.parse(md || "", { breaks: true });
+}
+
+// ---------- Toolbar ----------
+function ToolbarButton({ onClick, active, title, children }) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
+      title={title}
+      className={`p-1.5 rounded text-sm transition-colors ${
+        active
+          ? "bg-gray-300 dark:bg-gray-600 text-black dark:text-white"
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+      }`}
+    >
+      {children}
+    </button>
+  );
 }
 
 // ------------------------------------------------
 
 export default function RichTextField({
-  value = "", // can be Markdown (preferred for storage)
-  onChange = () => {}, // will be called with MARKDOWN
+  value = "",
+  onChange = () => {},
   placeholder = "Write something...",
   disabled = false,
   maxChars = 20000,
   heightClass = "h-[70vh]",
   className = "",
 }) {
-  // Internally we keep HTML for the editor
-  const [htmlContent, setHtmlContent] = useState("");
-  const [wordCount, setWordCount] = useState(0);
-  const [editorLoaded, setEditorLoaded] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const quillRef = useRef(null);
   const [showPreview, setShowPreview] = useState(false);
-  const openPreview = () => setShowPreview(true);
-  const toolbarId = useMemo(() => "toolbar-" + uuid(), []);
-
-  // Decide how to initialize the editor: if parent passes Markdown (no "<"), render it to HTML
-  useEffect(() => {
-    setEditorLoaded(true);
-  }, []);
-
   const lastMdEmittedRef = useRef("");
 
-  useEffect(() => {
-    // If parent echoes back exactly what we just emitted, do nothing.
-    if (value === lastMdEmittedRef.current) return;
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { rel: "noopener noreferrer" },
+      }),
+      Image.configure({ inline: false }),
+      Placeholder.configure({ placeholder }),
+    ],
+    content: "",
+    editable: !disabled,
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      const md = htmlToMarkdown(html);
+      lastMdEmittedRef.current = md;
+      onChange(md);
+    },
+  });
 
+  // Sync incoming value → editor (only when parent changes it externally)
+  useEffect(() => {
+    if (!editor) return;
+    if (value === lastMdEmittedRef.current) return;
     const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(value);
     const html = looksLikeHtml ? value : markdownToHtml(value);
-    setHtmlContent(html);
+    editor.commands.setContent(html, false);
+  }, [value, editor]);
 
-    const plainText = (html || "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    setWordCount(plainText ? plainText.split(" ").length : 0);
-  }, [value]);
-
-  const handleChange = (html) => {
-    setHtmlContent(html);
-
-    const text = html
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    setWordCount(text ? text.split(" ").length : 0);
-
-    const md = htmlToMarkdown(html);
-    lastMdEmittedRef.current = md; // <— mark what we sent
-    onChange(md);
-  };
-
-  useEffect(() => {
-    const editor = quillRef.current?.getEditor?.();
-    if (!editor) return;
-    editor.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
-      // Strip pasted base64 images
-      delta.ops = (delta.ops || []).filter((op) => {
-        if (!op.insert || !op.insert.image) return true;
-        return !String(op.insert.image).startsWith("data:");
-      });
-      return delta;
-    });
-  }, [editorLoaded]);
-
-  const openImageDialog = () => setShowImageDialog(true);
-
-  function handleInsertImages(urlsOrSingle) {
-    const editor = quillRef.current?.getEditor?.();
-    if (!editor) return;
-    const urls = Array.isArray(urlsOrSingle) ? urlsOrSingle : [urlsOrSingle];
-    let idx = editor.getSelection()?.index ?? editor.getLength();
-    for (const url of urls) {
-      if (!url) continue;
-      if (!/^https?:\/\//i.test(url)) continue;
-      editor.insertEmbed(idx, "image", url, "user");
-      idx += 1;
-      editor.insertText(idx, "\n", "user"); // newline after image
-      idx += 1;
-    }
-    editor.setSelection(idx, 0, "user");
-    setShowImageDialog(false);
-
-    // Sync outbound markdown after programmatic change
-    const updatedHtml = editor.root.innerHTML;
-    setHtmlContent(updatedHtml);
-    onChange(htmlToMarkdown(updatedHtml));
+  function handleSetLink() {
+    const url = window.prompt("Enter URL:");
+    if (!url) return;
+    editor.chain().focus().setLink({ href: url }).run();
   }
 
-  const modules = useMemo(
-    () => ({
-      toolbar: "#" + toolbarId,
-      clipboard: { matchVisual: true },
-    }),
-    [toolbarId]
-  );
+  function handleInsertImages(urlsOrSingle) {
+    if (!editor) return;
+    const urls = Array.isArray(urlsOrSingle) ? urlsOrSingle : [urlsOrSingle];
+    for (const url of urls) {
+      if (!url || !/^https?:\/\//i.test(url)) continue;
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+    setShowImageDialog(false);
+    // Sync markdown after programmatic change
+    const html = editor.getHTML();
+    const md = htmlToMarkdown(html);
+    lastMdEmittedRef.current = md;
+    onChange(md);
+  }
 
-  const formats = [
-    "header",
-    "font",
-    "size",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "blockquote",
-    "list",
-    "bullet",
-    "link",
-    "image",
-  ];
+  const wordCount = useMemo(() => {
+    if (!editor) return 0;
+    const text = editor.getText().replace(/\s+/g, " ").trim();
+    return text ? text.split(" ").length : 0;
+  }, [editor?.state]);
 
-  if (!editorLoaded) return <div>Loading editor...</div>;
+  if (!editor) return <div>Loading editor...</div>;
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <CustomToolbar
-        onOpenImageDialog={openImageDialog}
-        onOpenPreview={openPreview}
-        toolbarId={toolbarId}
-      />
+      {/* Toolbar */}
+      <div className="flex flex-wrap gap-1 p-2 border border-gray-300 dark:border-gray-600 rounded-t-md bg-gray-50 dark:bg-gray-800">
+        <ToolbarButton
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          active={editor.isActive("heading", { level: 2 })}
+          title="Heading 2"
+        >
+          <Heading2 size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          active={editor.isActive("bold")}
+          title="Bold"
+        >
+          <Bold size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          active={editor.isActive("blockquote")}
+          title="Blockquote"
+        >
+          <Quote size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          active={editor.isActive("orderedList")}
+          title="Ordered List"
+        >
+          <ListOrdered size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          active={editor.isActive("bulletList")}
+          title="Bullet List"
+        >
+          <List size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={handleSetLink}
+          active={editor.isActive("link")}
+          title="Link"
+        >
+          <Link2 size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => setShowImageDialog(true)}
+          active={false}
+          title="Insert Image"
+        >
+          <IconPhoto size={18} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => setShowPreview(true)}
+          active={false}
+          title="Preview"
+        >
+          <Eye size={16} />
+        </ToolbarButton>
+      </div>
 
-      <ReactQuill
-        ref={quillRef}
-        value={htmlContent}
-        onChange={handleChange}
-        modules={modules}
-        formats={formats}
-        placeholder={placeholder}
-        theme="snow"
-        readOnly={disabled}
-        className={`${heightClass}  custom-y-scroll  bg-white dark:bg-gray-900 text-black dark:text-white rounded-md`}
+      {/* Editor area */}
+      <EditorContent
+        editor={editor}
+        className={`${heightClass} overflow-y-auto custom-y-scroll bg-white dark:bg-gray-900 text-black dark:text-white border border-t-0 border-gray-300 dark:border-gray-600 rounded-b-md`}
+        style={{ padding: "0.75rem" }}
       />
 
       <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -281,13 +248,11 @@ export default function RichTextField({
       />
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-[63rem]   custom-y-scroll max-h-[90vh] border-gray-600 overflow-y-auto p-6">
+        <DialogContent className="max-w-[63rem] custom-y-scroll max-h-[90vh] border-gray-600 overflow-y-auto p-6">
           <DialogHeader>
             <DialogTitle>Preview</DialogTitle>
           </DialogHeader>
-
           <div className="border-t border-gray-600 custom-y-scrollbar pt-4">
-            {/* Feed Markdown directly to your BlogBody renderer */}
             <BlogBody body={lastMdEmittedRef.current || value} />
           </div>
         </DialogContent>
