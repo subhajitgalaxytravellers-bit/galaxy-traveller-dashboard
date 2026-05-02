@@ -47,13 +47,14 @@ export default function MainLayout() {
   const { data: me } = useCurrentUser();
   const { data: role } = useRoleId(me?.roleId || null);
   const user = me;
-  const [global, setGlobal] = useState();
+  const [global, setGlobal] = useState(null);
 
   useEffect(() => {
     async function fetchGlobalData() {
       try {
-        const data = await api().get('/api/site_global');
-        setGlobal(data.data.data);
+        const response = await api().get('/api/site_global');
+        const payload = response?.data?.data ?? response?.data ?? null;
+        setGlobal(payload && typeof payload === 'object' ? payload : null);
       } catch (error) {
         console.error(error);
       }
@@ -153,8 +154,13 @@ export default function MainLayout() {
   ];
 
   const sections = appSections;
-
-  console.log('sections', global);
+  const globalName = String(
+    global?.name ??
+      global?.siteName ??
+      global?.brandName ??
+      'Galaxy Travel',
+  ).trim();
+  const sidebarTitle = `${globalName || 'Galaxy Travel'}.`;
 
   return (
     <SidebarProvider>
@@ -162,7 +168,7 @@ export default function MainLayout() {
         <div className='flex h-screen w-screen'>
           {!hideSidebar && (
             <AppSidebar
-              title={`${global?.name}.`}
+              title={sidebarTitle}
               sections={sections}
               user={user}
             />

@@ -46,8 +46,25 @@ const fmtDate = (v) => {
 };
 const countWords = (text = '') =>
   text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
-const getNestedValue = (obj, path) =>
-  path?.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+const getNestedValue = (obj, path) => {
+  if (!obj || !path) return undefined;
+
+  // Support literal dotted keys as well (e.g. "itinerary.day")
+  // used in dynamic read-only rows for nested object[] fields.
+  if (Object.prototype.hasOwnProperty.call(obj, path)) return obj[path];
+
+  const parts = path.split('.');
+  const nested = parts.reduce(
+    (acc, key) => (acc == null ? undefined : acc[key]),
+    obj,
+  );
+  if (nested !== undefined) return nested;
+
+  const last = parts[parts.length - 1];
+  if (Object.prototype.hasOwnProperty.call(obj, last)) return obj[last];
+
+  return undefined;
+};
 
 const titleize = (s) =>
   s
@@ -62,21 +79,26 @@ const displayLabel = (v) =>
 const readOnlyField = (field, row) => {
   const val = getNestedValue(row, field.key);
   const display =
-    val === null || val === undefined
+    val === null || val === undefined || val === ''
       ? '—'
       : Array.isArray(val)
-      ? val.map(displayLabel).join(', ')
-      : typeof val === 'object'
-      ? displayLabel(val)
-      : val;
+        ? val.map(displayLabel).join(', ')
+        : typeof val === 'object'
+          ? displayLabel(val)
+          : val;
 
   switch (field.type) {
     case 'switch':
     case 'boolean':
       return (
         <div className='flex items-center gap-2'>
-          <Switch checked={!!val} disabled />
-          <span className='text-sm text-gray-700 dark:text-gray-200'>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              val
+                ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+                : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+            }`}
+          >
             {val ? 'Yes' : 'No'}
           </span>
         </div>
@@ -84,106 +106,106 @@ const readOnlyField = (field, row) => {
     case 'textarea':
     case 'richtext':
       return (
-        <Textarea
-          value={display}
-          readOnly
-          className='min-h-[80px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-          onChange={() => {}}
-        />
+        <div className='text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed border-l-2 border-gray-200 dark:border-gray-700 pl-3 py-1'>
+          {display}
+        </div>
       );
     case 'date':
       return (
-        <Input
-          value={fmtDate(val)}
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
+        <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          {val ? fmtDate(val) : '—'}
+        </div>
       );
     case 'image':
       return val ? (
-        <img
-          src={val}
-          alt={field.label || field.key}
-          className='h-16 w-24 object-cover rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-        />
+        <div className='relative overflow-hidden rounded-md group'>
+          <img
+            src={val}
+            alt={field.label || field.key}
+            className='h-32 w-full max-w-[200px] object-cover border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 transition-transform group-hover:scale-105'
+          />
+        </div>
       ) : (
-        <Input
-          value='—'
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
+        <div className='text-sm text-gray-500 italic'>—</div>
       );
     case 'image[]':
       return Array.isArray(val) && val.length > 0 ? (
-        <div className='flex flex-wrap gap-2'>
+        <div className='flex flex-wrap gap-3'>
           {val.map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              alt={`${field.label || field.key}-${i}`}
-              className='h-12 w-16 object-cover rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-            />
-          ))}
-        </div>
-      ) : (
-        <Input
-          value='—'
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
-      );
-    case 'relation':
-      return (
-        <Input
-          value={displayLabel(val)}
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
-      );
-    case 'relation[]':
-      return Array.isArray(val) && val.length ? (
-        <div className='flex flex-col gap-1'>
-          {val.map((item, i) => (
-            <div
-              key={i}
-              className='px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm'>
-              {displayLabel(item)}
+            <div key={i} className='relative overflow-hidden rounded-md group'>
+              <img
+                src={src}
+                alt={`${field.label || field.key}-${i}`}
+                className='h-24 w-32 object-cover border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 transition-transform group-hover:scale-105'
+              />
             </div>
           ))}
         </div>
       ) : (
-        <Input
-          value='—'
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
+        <div className='text-sm text-gray-500 italic'>—</div>
+      );
+    case 'relation':
+      return (
+        <div className='text-sm font-medium text-blue-600 dark:text-blue-400'>
+          {display}
+        </div>
+      );
+    case 'relation[]':
+      return Array.isArray(val) && val.length ? (
+        <div className='flex flex-wrap gap-2'>
+          {val.map((item, i) => (
+            <span
+              key={i}
+              className='inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30'
+            >
+              {displayLabel(item)}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className='text-sm text-gray-500 italic'>—</div>
+      );
+    case 'text[]':
+    case 'string[]':
+      return Array.isArray(val) && val.length > 0 ? (
+        <ul className='space-y-1.5 list-none m-0 p-0'>
+          {val.map((str, i) => (
+            <li key={i} className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'>
+              <span className='text-blue-500 mt-0.5'>
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </span>
+              <span className="leading-relaxed break-words">{typeof str === 'object' ? displayLabel(str) : String(str)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className='text-sm text-gray-500 italic'>—</div>
       );
     case 'object':
       return Array.isArray(field.fields) && field.fields.length ? (
-        <div className='grid gap-2'>
+        <div className='grid sm:grid-cols-2 gap-y-4 gap-x-6 mt-2'>
           {field.fields.map((child) => (
-            <div key={child.key} className='space-y-1'>
-              <Label className='text-[11px] uppercase tracking-wide text-muted-foreground'>
+            <div key={child.key} className='flex flex-col gap-1.5'>
+              <span className='text-[10px] uppercase font-semibold tracking-wider text-gray-500 dark:text-gray-400'>
                 {child.label || titleize(child.key)}
-              </Label>
+              </span>
               {readOnlyField(child, row)}
             </div>
           ))}
         </div>
       ) : (
-        <Input
-          value={display}
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
+        <div className='text-sm text-gray-900 dark:text-gray-100'>{display}</div>
       );
     case 'object[]':
       return Array.isArray(val) && val.length ? (
-        <div className='flex flex-col gap-2'>
+        <div className='flex flex-col gap-3 mt-2'>
           {val.map((item, idx) => (
             <div
               key={idx}
-              className='border border-gray-200 dark:border-gray-700 rounded p-2 bg-gray-50 dark:bg-gray-800 space-y-2'>
+              className='flex flex-col gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-800/50'
+            >
               {(field.fields || []).map((child) => {
                 const parts = String(child.key || '').split('.');
                 const relativeKey = parts[parts.length - 1];
@@ -193,10 +215,10 @@ const readOnlyField = (field, row) => {
                   [relativeKey]: item[relativeKey],
                 };
                 return (
-                  <div key={child.key} className='space-y-1'>
-                    <Label className='text-[11px] uppercase tracking-wide text-muted-foreground'>
+                  <div key={child.key} className='flex flex-col gap-1.5'>
+                    <span className='text-[10px] uppercase font-semibold tracking-wider text-gray-500 dark:text-gray-400'>
                       {child.label || titleize(child.key)}
-                    </Label>
+                    </span>
                     {readOnlyField(child, childRow)}
                   </div>
                 );
@@ -205,19 +227,25 @@ const readOnlyField = (field, row) => {
           ))}
         </div>
       ) : (
-        <Input
-          value='—'
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
+        <div className='text-sm text-gray-500 italic'>—</div>
       );
     default:
+      if (Array.isArray(val) && val.length > 0) {
+        return (
+          <ul className='space-y-1.5 list-none m-0 p-0'>
+            {val.map((item, i) => (
+              <li key={i} className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'>
+                <div className='mt-2 w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 flex-shrink-0' />
+                <span className="leading-relaxed break-words">{displayLabel(item)}</span>
+              </li>
+            ))}
+          </ul>
+        );
+      }
       return (
-        <Input
-          value={display}
-          readOnly
-          className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        />
+        <div className='text-sm font-medium text-gray-900 dark:text-gray-100 break-words'>
+          {display}
+        </div>
       );
   }
 };
@@ -962,11 +990,11 @@ export default function DynamicTable() {
             setCancelReason('');
           }
         }}>
-        <DialogContent className='max-w-4xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl'>
-          <DialogHeader>
+        <DialogContent className='max-w-4xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-2xl sm:rounded-2xl p-0 overflow-hidden'>
+          <DialogHeader className='px-6 py-5 bg-gray-50/80 dark:bg-gray-900/80 border-b border-gray-100 dark:border-gray-800'>
             <DialogTitle className='pr-10'>
-              <div className='flex items-start gap-3 min-w-0'>
-                <span className='font-semibold text-base md:text-lg break-words leading-tight min-w-0'>
+              <div className='flex items-center gap-4 min-w-0'>
+                <span className='font-bold text-xl md:text-2xl text-gray-900 dark:text-white break-words leading-tight min-w-0'>
                   {detailTitle}
                 </span>
                 {detailStatus && (
@@ -977,42 +1005,62 @@ export default function DynamicTable() {
               </div>
             </DialogTitle>
             {transactionId && (
-              <DialogDescription className='text-xs'>
-                Transaction ID: {transactionId}
+              <DialogDescription className='mt-2 flex items-center text-sm text-gray-500 font-medium'>
+                <span className='mr-2 uppercase tracking-wide text-[10px] bg-gray-200 dark:bg-gray-800 px-2 py-0.5 rounded-full'>
+                  txn_id
+                </span>
+                {transactionId}
               </DialogDescription>
             )}
           </DialogHeader>
 
           <div
-            className='grid md:grid-cols-2 gap-4 max-h-[60vh] overflow-auto [&::-webkit-scrollbar]:hidden'
-            style={{ scrollbarWidth: 'none' }}>
-            {visibleFields.map((field) => (
-              <div
-                key={field.key}
-                className='flex flex-col gap-1 border border-gray-200 dark:border-gray-700 rounded-md p-3'>
-                <Label className='text-xs uppercase tracking-wide text-muted-foreground'>
-                  {field.label || titleize(field.key)}
-                </Label>
-                {readOnlyField(field, selectedRow)}
-              </div>
-            ))}
+            className='grid md:grid-cols-2 gap-x-6 gap-y-6 max-h-[65vh] overflow-y-auto overflow-x-hidden px-6 py-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full'
+          >
+            {visibleFields.map((field) => {
+              const takesFullWidth =
+                field.type === 'object[]' ||
+                field.type === 'image[]' ||
+                field.type === 'textarea' ||
+                field.type === 'richtext' ||
+                field.type === 'object';
+
+              return (
+                <div
+                  key={field.key}
+                  className={`flex flex-col gap-1.5 ${
+                    takesFullWidth ? 'md:col-span-2' : 'md:col-span-1'
+                  } bg-white dark:bg-gray-900 border shadow-sm border-gray-100 dark:border-gray-800 rounded-xl p-4`}
+                >
+                  <span className='text-[11px] uppercase tracking-[0.08em] font-semibold text-gray-400 dark:text-gray-500'>
+                    {field.label || titleize(field.key)}
+                  </span>
+                  {readOnlyField(field, selectedRow)}
+                </div>
+              );
+            })}
           </div>
 
-          <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <DialogFooter className='px-6 py-4 bg-gray-50/80 dark:bg-gray-900/80 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 sm:flex-row sm:justify-end sm:items-center'>
             {isBookingModel ? (
               <>
                 <Button
                   type='button'
                   variant='secondary'
+                  className='rounded-full px-5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
                   onClick={() => applyStatus('pending')}>
                   Mark Pending
                 </Button>
-                <Button type='button' onClick={() => applyStatus('confirmed')}>
+                <Button 
+                  type='button' 
+                  className='rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-colors'
+                  onClick={() => applyStatus('confirmed')}>
                   Confirm Booking
                 </Button>
                 <Button
                   type='button'
                   variant='destructive'
+                  className='rounded-full px-5 hover:bg-red-600 transition-colors'
                   onClick={() => {
                     setCancelReason(selectedRow?.cancellationReason || '');
                     setReasonOpen(true);
@@ -1025,17 +1073,20 @@ export default function DynamicTable() {
                 <Button
                   type='button'
                   variant='outline'
+                  className='rounded-full border-gray-300 dark:border-gray-600 px-5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all font-medium text-gray-700 dark:text-gray-300'
                   onClick={() => applyStatus(statusDraft)}>
                   Save Draft
                 </Button>
                 <Button
                   type='button'
+                  className='rounded-full px-6 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all font-medium'
                   onClick={() => applyStatus(statusPublished)}>
                   Publish
                 </Button>
                 <Button
                   type='button'
                   variant='destructive'
+                  className='rounded-full px-5 bg-rose-500 hover:bg-rose-600 shadow-sm hover:shadow transition-all font-medium'
                   onClick={() => applyStatus(statusRejected)}>
                   Reject
                 </Button>

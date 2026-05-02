@@ -20,6 +20,22 @@ export default function AppSidebar({
 }) {
   const { open, closeSidebar, isMobile } = useSidebar();
   const collapsed = isMobile ? false : !open;
+  const [sidebarQuery, setSidebarQuery] = React.useState("");
+
+  const normalizedQuery = sidebarQuery.trim().toLowerCase();
+  const filteredSections = React.useMemo(() => {
+    if (!normalizedQuery) return sections;
+
+    return sections
+      .map((section) => {
+        const filteredItems = (section?.items || []).filter((item) => {
+          const label = String(item?.title || item?.name || "").toLowerCase();
+          return label.includes(normalizedQuery);
+        });
+        return { ...section, items: filteredItems };
+      })
+      .filter((section) => (section?.items || []).length > 0);
+  }, [sections, normalizedQuery]);
 
   React.useEffect(() => {
     if (!isMobile) return;
@@ -84,7 +100,19 @@ export default function AppSidebar({
             collapsed ? "px-0" : "px-2 md:px-4"
           }`}
         >
-          {sections.map((section, idx) => (
+          {!collapsed && (
+            <div className="px-1">
+              <input
+                type="text"
+                value={sidebarQuery}
+                onChange={(e) => setSidebarQuery(e.target.value)}
+                placeholder="Search menu..."
+                className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-blue-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500"
+              />
+            </div>
+          )}
+
+          {filteredSections.map((section, idx) => (
             <NavSection
               key={`${section.title}-${idx}`}
               title={section.title}
@@ -92,6 +120,12 @@ export default function AppSidebar({
               collapsed={collapsed}
             />
           ))}
+
+          {!collapsed && normalizedQuery && filteredSections.length === 0 && (
+            <p className="px-3 text-sm text-gray-500 dark:text-gray-400">
+              No menu found for "{sidebarQuery}"
+            </p>
+          )}
         </div>
 
         {/* Footer */}

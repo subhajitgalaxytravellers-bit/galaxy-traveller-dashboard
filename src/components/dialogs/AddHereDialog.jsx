@@ -12,7 +12,6 @@ import {
 import { IconPlus, IconX, IconUpload, IconCheck } from "@tabler/icons-react";
 import { toast } from "react-toastify"; // ✅ use toastify
 import api from "@/lib/api";
-import axios from "axios";
 
 function safeFilename(name) {
   const n = (name || "image").trim();
@@ -29,6 +28,23 @@ function uniqueName(baseName) {
   const base = parts.join(".");
   const stamp = Date.now().toString(36);
   return `${base}-${stamp}${ext}`;
+}
+
+function parseErrorMessage(err) {
+  if (!err) return "Unknown error";
+  if (typeof err === "string") return err;
+  if (err?.response?.data?.message) return err.response.data.message;
+  if (err?.response?.data?.error) return err.response.data.error;
+  if (err?.message) return err.message;
+  return String(err);
+}
+
+function parseGcsXmlError(text) {
+  if (!text || typeof text !== "string") return "";
+  const code = text.match(/<Code>(.*?)<\/Code>/)?.[1];
+  const message = text.match(/<Message>(.*?)<\/Message>/)?.[1];
+  if (code || message) return [code, message].filter(Boolean).join(": ");
+  return "";
 }
 
 export default function AddHereUploader({
@@ -127,14 +143,19 @@ export default function AddHereUploader({
     //   body: file,
     // });
 
-    const res = await axios.put(uploadUrl, file, {
+    const res = await fetch(uploadUrl, {
+      method: "PUT",
       headers: {
         "Content-Type": file.type || "application/octet-stream",
-        "x-goog-acl": "public-read",
       },
+      body: file,
     });
-    if (res.status < 200 || res.status >= 300)
-      throw new Error("PUT upload failed: " + res.status);
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => "");
+      const parsed = parseGcsXmlError(bodyText);
+      const details = parsed || bodyText || `HTTP ${res.status}`;
+      throw new Error(`Upload failed (${res.status}): ${details}`);
+    }
     return res;
   }
 
@@ -198,7 +219,8 @@ export default function AddHereUploader({
         });
         ok += 1;
       } catch (err) {
-        toast.error(`Failed to upload ${item.name}: ${err}`);
+        const message = parseErrorMessage(err);
+        toast.error(`Failed to upload ${item.name}: ${message}`);
         console.error("Upload error for", item.name, err);
         setFiles((old) => {
           const copy = [...old];

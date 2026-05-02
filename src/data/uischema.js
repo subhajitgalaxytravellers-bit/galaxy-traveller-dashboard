@@ -1664,10 +1664,59 @@ const uiSchemas = [
         position: 3,
         required: false,
       },
+
+      primaryImage: {
+        type: 'object',
+        label: 'Primary Image (Large)',
+        width: '50%',
+        position: 4,
+        fields: [
+          {
+            key: 'primaryImage.url',
+            label: 'Image',
+            type: 'image',
+            width: '100%',
+            required: false,
+          },
+          {
+            key: 'primaryImage.alt',
+            label: 'Alt Text',
+            type: 'text',
+            width: '100%',
+            required: false,
+            maxLength: 200,
+          },
+        ],
+      },
+
+      secondaryImage: {
+        type: 'object',
+        label: 'Secondary Image (Small Overlay)',
+        width: '50%',
+        position: 5,
+        fields: [
+          {
+            key: 'secondaryImage.url',
+            label: 'Image',
+            type: 'image',
+            width: '100%',
+            required: false,
+          },
+          {
+            key: 'secondaryImage.alt',
+            label: 'Alt Text',
+            type: 'text',
+            width: '100%',
+            required: false,
+            maxLength: 200,
+          },
+        ],
+      },
+
       status: {
         type: 'enumDropdown',
         width: '50%',
-        position: 4,
+        position: 6,
         required: false,
         default: 'draft',
         enumValues: ['draft', 'published', 'rejected'],
@@ -1676,7 +1725,7 @@ const uiSchemas = [
         type: 'relation',
         ref: 'User',
         width: '50%',
-        position: 5,
+        position: 7,
         required: false,
       },
 
@@ -1684,7 +1733,7 @@ const uiSchemas = [
         type: 'object',
         fields: [],
         width: '100%',
-        position: 7,
+        position: 8,
         required: false,
       },
     },
