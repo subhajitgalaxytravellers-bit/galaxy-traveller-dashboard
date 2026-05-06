@@ -49,6 +49,38 @@ const uiSchemas = [
         required: false,
         maxLength: 2000,
       },
+      hero: {
+        type: 'object',
+        label: 'Hero Section',
+        fields: [
+          {
+            key: 'hero.heroImg',
+            label: 'Hero Image',
+            type: 'image',
+            width: '100%',
+            required: false,
+          },
+          {
+            key: 'hero.heroTitle',
+            label: 'Hero Title (short)',
+            type: 'text',
+            width: '50%',
+            required: false,
+            maxLength: 80,
+          },
+          {
+            key: 'hero.heroDescription',
+            label: 'Hero Description (short)',
+            type: 'textarea',
+            width: '50%',
+            required: false,
+            maxLength: 220,
+          },
+        ],
+        width: '100%',
+        position: 5.5,
+        required: false,
+      },
       destinations: {
         type: 'unidirectionalRelation[]',
         ref: 'Destination',
@@ -450,12 +482,12 @@ const uiSchemas = [
         maxLength: 100,
         label: 'Short Description',
       },
-      descriptionLong: {
-        type: 'richtext',
+      about: {
+        type: 'textarea',
         width: '100%',
         position: 3,
         required: false,
-        label: 'Long Description',
+        label: 'About',
       },
 
       highlight: {
