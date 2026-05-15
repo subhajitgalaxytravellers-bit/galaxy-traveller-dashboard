@@ -56,6 +56,8 @@ export default function UserDialog({
     social: defaultSocial,
     roleId: "",
     status: "active",
+    password: "",
+    confirmPassword: "",
   });
 
   // Reset or prefill form
@@ -75,6 +77,8 @@ export default function UserDialog({
           }),
           roleId: String(user.roleId || ""),
           status: user.status || "active",
+          password: "",
+          confirmPassword: "",
         });
       } else {
         reset();
@@ -93,6 +97,8 @@ export default function UserDialog({
       social: defaultSocial,
       roleId: "",
       status: "active",
+      password: "",
+      confirmPassword: "",
     });
 
   const updateField = (key, value) =>
@@ -106,6 +112,9 @@ export default function UserDialog({
         name: form.name.trim(),
         email: form.email.trim(),
       };
+
+      if (!payload.password) delete payload.password;
+      delete payload.confirmPassword;
 
       if (!payload.roleId) delete payload.roleId;
 
@@ -130,6 +139,9 @@ export default function UserDialog({
         email: form.email.trim(),
       };
 
+      if (!payload.password) delete payload.password;
+      delete payload.confirmPassword;
+
       if (!payload.roleId) delete payload.roleId;
 
       const id = user?._id || user?.id;
@@ -151,7 +163,8 @@ export default function UserDialog({
   const canSave =
     form.name.trim().length >= 2 &&
     /\S+@\S+\.\S+/.test(form.email) &&
-    !!form.roleId;
+    !!form.roleId &&
+    form.password === form.confirmPassword;
 
   const isPending = create.isPending || edit.isPending;
 
@@ -196,6 +209,35 @@ export default function UserDialog({
                 placeholder="name@example.com"
                 disabled={isEdit}
               />
+            </div>
+
+            {/* Passwords */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="u-password">
+                  Password <span className="text-sm opacity-80 text-gray-400">(optional)</span>
+                </Label>
+                <Input
+                  id="u-password"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => updateField("password", e.target.value)}
+                  placeholder={isEdit ? "Leave blank to keep same" : "••••••••"}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="u-confirm-password">Confirm Password</Label>
+                <Input
+                  id="u-confirm-password"
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(e) => updateField("confirmPassword", e.target.value)}
+                  placeholder="••••••••"
+                />
+                {form.password && form.confirmPassword && form.password !== form.confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+                )}
+              </div>
             </div>
 
             {/* Role */}

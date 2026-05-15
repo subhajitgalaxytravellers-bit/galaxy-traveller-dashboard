@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 
 export default function CountCard({ label, icon: Icon, value, href, loading }) {
   return (
-    <Card className="p-2 min-w-0 rounded-lg border border-muted-foreground bg-card text-card-foreground">
+    <Card className="p-2 min-w-0 rounded-lg border-none bg-card text-card-foreground shadow-md">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {Icon ? (

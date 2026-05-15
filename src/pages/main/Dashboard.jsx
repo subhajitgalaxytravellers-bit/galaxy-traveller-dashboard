@@ -242,7 +242,7 @@ function BarChartCard({ data }) {
   const gradId = React.useId();
 
   return (
-    <Card className="min-w-0 border-gray-200/70 dark:border-gray-900 bg-white dark:bg-gray-900">
+    <Card className="min-w-0 border-none bg-white dark:bg-gray-900 shadow-md">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2 text-foreground">
           <span className="inline-block h-2 w-2 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
@@ -354,7 +354,7 @@ function BarChartCard({ data }) {
 function LeadsCard({ items }) {
   const navigate = useNavigate();
   return (
-    <Card className="min-w-0 border-gray-200/70 dark:border-gray-900 bg-white dark:bg-gray-900">
+    <Card className="min-w-0 border-none bg-white dark:bg-gray-900 shadow-md">
       <CardHeader>
         <CardTitle className="text-base">Recent Leads</CardTitle>
       </CardHeader>
@@ -402,7 +402,7 @@ function QuickActions({ isCreator = false }) {
     ? ["blog", "tour", "enquiries", "testimonial"] // Include Testimonial for creators
     : ["blog", "destinations", "experiences", "tour"]; // Default models for non-creators
   return (
-    <Card className="min-w-0 border-gray-200/70 dark:border-gray-900 bg-white dark:bg-gray-900">
+    <Card className="min-w-0 border-none bg-white dark:bg-gray-900 shadow-md">
       <CardHeader>
         <CardTitle className="text-base">Quick Actions</CardTitle>
       </CardHeader>
@@ -508,7 +508,7 @@ export default function Dashboard() {
                     <BarChartCard data={chartData} />
                   </div>
                   <div className="min-w-0">
-                    <Card className="border-gray-200/70 dark:border-gray-900 bg-white dark:bg-gray-900">
+                    <Card className="border-none bg-white dark:bg-gray-900 shadow-md">
                       <CardHeader>
                         <CardTitle className="text-base">At a glance</CardTitle>
                       </CardHeader>

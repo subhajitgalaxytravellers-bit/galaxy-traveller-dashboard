@@ -5,50 +5,51 @@
 
 @custom-variant dark (&:is(.dark *));
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: #0f172a;
+  background-color: #f8fafc;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.13 0.028 261.692);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.028 261.692);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0.028 261.692);
-  --primary: oklch(0.21 0.034 264.665);
-  --primary-foreground: oklch(0.985 0.002 247.839);
-  --secondary: oklch(0.967 0.003 264.542);
-  --secondary-foreground: oklch(0.21 0.034 264.665);
-  --muted: oklch(0.967 0.003 264.542);
-  --muted-foreground: oklch(0.551 0.027 264.364);
-  --accent: oklch(0.967 0.003 264.542);
-  --accent-foreground: oklch(0.21 0.034 264.665);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.928 0.006 264.531);
-  --input: oklch(0.928 0.006 264.531);
-  --ring: oklch(0.707 0.022 261.325);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.002 247.839);
-  --sidebar-foreground: oklch(0.13 0.028 261.692);
-  --sidebar-primary: oklch(0.21 0.034 264.665);
-  --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-accent: oklch(0.967 0.003 264.542);
-  --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
-  --sidebar-border: oklch(0.928 0.006 264.531);
-  --sidebar-ring: oklch(0.707 0.022 261.325);
+  --background: #f8fafc;
+  --foreground: #020617;
+  --card: #ffffff;
+  --card-foreground: #020617;
+  --popover: #ffffff;
+  --popover-foreground: #020617;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #3b82f6;
+  --chart-1: #2563eb;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #6366f1;
+  --chart-5: #ec4899;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #3b82f6;
 }
 
 /* Add this in globals.css or tailwind.css */
@@ -63,28 +64,28 @@ input[type="number"] {
 
 /* Toolbar */
 .custom-quill-toolbar.ql-toolbar {
-  border: 1px solid #d1d5db; /* gray-300 */
-  border-radius: 0.375rem; /* rounded-md */
-  background-color: #f3f4f6; /* gray-100 */
-  color: #111827; /* gray-900 */
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.375rem;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 .dark .custom-quill-toolbar.ql-toolbar {
-  border-color: #374151; /* gray-700 */
-  background-color: #1f2937; /* gray-800 */
-  color: #ffffff !important; /* gray-50 */
+  border-color: #1c244b;
+  background-color: #1e264d;
+  color: #e0e7ff !important;
 }
 
 /* Editor container */
 .ql-container {
-  border: 1px solid #d1d5db !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 0.375rem !important;
   background-color: #ffffff;
 }
 
 .dark .ql-container {
-  border-color: #374151 !important;
-  background-color: #111827 !important;
+  border-color: #1c244b !important;
+  background-color: #030510 !important;
 }
 
 /* Editor text area */
@@ -92,11 +93,11 @@ input[type="number"] {
   min-height: 300px;
   padding: 1rem;
   font-size: 0.875rem;
-  color: #111827; /* gray-900 */
+  color: #0f172a;
 }
 
 .dark .ql-editor {
-  color: #f9fafb; /* gray-50 */
+  color: #e0e7ff;
 }
 
 /* scope this to your editor wrapper if you want */
@@ -225,37 +226,37 @@ button:focus-visible {
 }
 
 .dark {
-  --background: oklch(0.13 0.028 261.692);
-  --foreground: oklch(0.985 0.002 247.839);
-  --card: oklch(0.21 0.034 264.665);
-  --card-foreground: oklch(0.985 0.002 247.839);
-  --popover: oklch(0.21 0.034 264.665);
-  --popover-foreground: oklch(0.985 0.002 247.839);
-  --primary: oklch(0.928 0.006 264.531);
-  --primary-foreground: oklch(0.21 0.034 264.665);
-  --secondary: oklch(0.278 0.033 256.848);
-  --secondary-foreground: oklch(0.985 0.002 247.839);
-  --muted: oklch(0.278 0.033 256.848);
-  --muted-foreground: oklch(0.707 0.022 261.325);
-  --accent: oklch(0.278 0.033 256.848);
-  --accent-foreground: oklch(0.985 0.002 247.839);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.034 264.665);
-  --sidebar-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-accent: oklch(0.278 0.033 256.848);
-  --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: #030510;
+  --foreground: #e0e7ff;
+  --card: #0a0e20;
+  --card-foreground: #e0e7ff;
+  --popover: #0a0e20;
+  --popover-foreground: #e0e7ff;
+  --primary: #00f3ff;
+  --primary-foreground: #001226;
+  --secondary: #1e264d;
+  --secondary-foreground: #e0e7ff;
+  --muted: #1e264d;
+  --muted-foreground: #93a5f5;
+  --accent: #1e264d;
+  --accent-foreground: #e0e7ff;
+  --destructive: #ff003c;
+  --border: #1c244b;
+  --input: #1c244b;
+  --ring: #00f3ff;
+  --chart-1: #00f3ff;
+  --chart-2: #3b82f6;
+  --chart-3: #8b5cf6;
+  --chart-4: #ec4899;
+  --chart-5: #06b6d4;
+  --sidebar: #0a0e20;
+  --sidebar-foreground: #e0e7ff;
+  --sidebar-primary: #00f3ff;
+  --sidebar-primary-foreground: #001226;
+  --sidebar-accent: #1e264d;
+  --sidebar-accent-foreground: #e0e7ff;
+  --sidebar-border: #1c244b;
+  --sidebar-ring: #00f3ff;
 }
 /* ---------- leave this exactly as-is ---------- */
 .ui-scrollbar-hidden {
@@ -283,9 +284,9 @@ button:focus-visible {
 
   /* Firefox colors (thumb | track) */
   /* These variables drive both Firefox and WebKit */
-  --sb-thumb: #c7c9d1;
-  --sb-thumb-hover: #bfc3cf;
-  --sb-thumb-active: #aab0bf;
+  --sb-thumb: #e2e8f0;
+  --sb-thumb-hover: #cbd5e1;
+  --sb-thumb-active: #94a3b8;
   --sb-track: transparent;
 
   /* Firefox */
@@ -296,9 +297,9 @@ button:focus-visible {
 /* Dark mode overrides (via .dark on <html> or a parent) */
 .dark .custom-y-scroll,
 .dark .custom-x-scroll {
-  --sb-thumb: #5b5f6b;
-  --sb-thumb-hover: #676b79;
-  --sb-thumb-active: #808497;
+  --sb-thumb: #1c244b;
+  --sb-thumb-hover: #2a3670;
+  --sb-thumb-active: #3b4b9e;
   --sb-track: transparent;
 }
 
@@ -366,10 +367,10 @@ button:focus-visible {
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus {
     /* text color for LIGHT */
-    -webkit-text-fill-color: theme("colors.gray.900");
-    /* force bg to match your light input bg (gray.50 is common) */
-    box-shadow: 0 0 0px 1000px theme("colors.gray.50") inset;
-    caret-color: theme("colors.gray.900");
+    -webkit-text-fill-color: #020617;
+    /* force bg to match your light input bg */
+    box-shadow: 0 0 0px 1000px #f8fafc inset;
+    caret-color: #020617;
   }
 
   .dark input:-webkit-autofill,
@@ -382,10 +383,10 @@ button:focus-visible {
   .dark select:-webkit-autofill:hover,
   .dark select:-webkit-autofill:focus {
     /* text color for DARK */
-    -webkit-text-fill-color: theme("colors.gray.100");
-    /* force bg to match your dark input bg (gray.900 is common) */
-    box-shadow: 0 0 0px 1000px theme("colors.gray.900") inset;
-    caret-color: theme("colors.gray.100");
+    -webkit-text-fill-color: #e0e7ff;
+    /* force bg to match your dark input bg */
+    box-shadow: 0 0 0px 1000px #030510 inset;
+    caret-color: #e0e7ff;
   }
 }
 
@@ -398,7 +399,7 @@ button:focus-visible {
   height: 0;
 }
 .dark .tiptap p.is-editor-empty:first-child::before {
-  color: theme("colors.gray.500");
+  color: #2a3670;
 }
 .tiptap:focus {
   outline: none;
