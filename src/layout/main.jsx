@@ -141,15 +141,51 @@ export default function MainLayout() {
     });
   };
 
+  const getPriority = (item) => {
+    const k = (item.key || item.title || '').toLowerCase();
+    const priorities = {
+      'dashboard': 1,
+      'booking': 2,
+      'tour': 3,
+      'tours': 3,
+      'destinations': 4,
+      'destination': 4,
+      'categories': 5,
+      'category': 5,
+      'blog': 6,
+      'users': 7,
+      'testimonial': 8,
+      'testimonials': 8,
+      'images': 9,
+      'coupons': 10,
+    };
+    return priorities[k] || 99;
+  };
+
+  const allItemsRaw = [
+    ...(navData.navMain || []).map(i => ({ ...i, key: i.key || i.title.toLowerCase() })),
+    ...collections,
+    ...singles,
+  ];
+
+  const allItems = filterByPermissions(allItemsRaw);
+
+  allItems.sort((a, b) => {
+    const pa = getPriority(a);
+    const pb = getPriority(b);
+    if (pa !== pb) return pa - pb;
+    return (a.title || '').localeCompare(b.title || '');
+  });
+
+  const frequentItems = allItems.filter(i => getPriority(i) < 99);
+  const otherItems = allItems.filter(i => getPriority(i) === 99);
+
   const appSections = [
-    { title: 'Main', items: filterByPermissions(navData.navMain || []) },
+    { title: 'Main', items: frequentItems },
     {
-      title: isLoading ? 'Loading Collections…' : 'Collections',
-      items: filterByPermissions(collections),
-    },
-    {
-      title: isLoading ? 'Loading Singles…' : 'Singles',
-      items: filterByPermissions(singles),
+      title: isLoading ? 'Loading...' : 'More Options',
+      items: otherItems,
+      isCollapsible: true
     },
   ];
 

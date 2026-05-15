@@ -118,6 +118,7 @@ export default function AppSidebar({
               title={section.title}
               items={section.items || []}
               collapsed={collapsed}
+              isCollapsible={section.isCollapsible}
             />
           ))}
 

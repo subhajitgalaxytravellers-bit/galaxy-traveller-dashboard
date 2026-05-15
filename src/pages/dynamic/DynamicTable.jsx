@@ -430,7 +430,7 @@ function buildColumns(modelDef, can) {
     key: '_id',
     label: 'ID',
     thClass: 'w-40',
-    accessor: (r) => r._id || r.id || '—',
+    accessor: (r) => r.customId || r._id || r.id || '—',
   });
 
   // Status column (custom)

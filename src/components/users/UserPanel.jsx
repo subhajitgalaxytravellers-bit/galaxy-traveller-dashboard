@@ -144,7 +144,7 @@ export default function UserPanel() {
             <div className="text-sm text-muted-foreground">No users found.</div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              <div className="flex flex-col gap-3 md:gap-4">
                 {filtered.map((u) => (
                   <UserCard
                     key={u._id || u.id || u.email}
