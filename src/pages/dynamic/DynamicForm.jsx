@@ -26,8 +26,6 @@ export default function DynamicForm({
   onSubmit,
   initialValues,
 }) {
-  console.log('initialValues', initialValues);
-
   const lsKey = `form-layout-${endpoint}`;
   const location = useLocation();
   const path = location.pathname;
@@ -53,6 +51,7 @@ export default function DynamicForm({
   const [loadedOnce, setLoadedOnce] = useState({}); // prevent double-fetch
 
   const params = useParams();
+  const isCategoryForm = modelKey === 'category' || modelKey === 'categories';
   // --- Fetcher uses field.ref when optionsEndpoint is missing ---
   const fetchOptionsForField = async (field, opts = {}) => {
     const key = field.key;
@@ -522,6 +521,11 @@ export default function DynamicForm({
           <>
             <form className='w-full flex max-w-screen' onSubmit={handleSubmit}>
               <div className='grid w-full grid-cols-2 gap-4 px-6'>
+                {isCategoryForm && values?.type === 'region' && (
+                  <div className='col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200'>
+                    Assign tours to the region category itself for region pages. Adding tours only to the parent tour group will not make them appear on the region page.
+                  </div>
+                )}
                 {layout.map((id) => {
                   const field = schema.find((f) => f.key === id);
                   if (!field) return null;
@@ -578,7 +582,6 @@ export default function DynamicForm({
                           <span className='ml-1 text-red-600'>*</span>
                         )}
                       </label>
-
                       <div
                         className={
                           hasError ? 'ring-2 ring-red-500 rounded-md p-1' : ''
@@ -586,6 +589,7 @@ export default function DynamicForm({
                         {isRelation ? (
                           <>
                             <RelationInput
+                              fieldKey={field.key}
                               nameKey={resolvedNameKey}
                               label={field.label || field.key}
                               onChange={updateValue}

@@ -413,14 +413,79 @@ const uiSchemas = [
         required: true,
         minLength: 2,
         maxLength: 180,
+        label: 'Tag (URL slug, lowercase)',
       },
-      description: {
-        type: 'textarea',
+      name: {
+        type: 'text',
         width: '50%',
         position: 1,
         required: false,
+        maxLength: 180,
+        label: 'Display Name',
+      },
+      description: {
+        type: 'textarea',
+        width: '100%',
+        position: 2,
+        required: false,
         minLength: 3,
         maxLength: 800,
+      },
+      type: {
+        type: 'enumDropdown',
+        width: '50%',
+        position: 3,
+        required: true,
+        label: 'Category Type',
+        default: 'general',
+        enumValues: ['tour_group', 'region', 'general'],
+      },
+      parentCategory: {
+        type: 'relation',
+        ref: 'Category',
+        optionsEndpoint: '/api/categories/moderation',
+        filter: {
+          type: 'tour_group',
+          parentCategory: 'null',
+        },
+        width: '50%',
+        position: 4,
+        required: false,
+        label: 'Parent Category (for regions only)',
+        visibleIf: (values) => values?.type === 'region',
+      },
+      displayOrder: {
+        type: 'number',
+        width: '50%',
+        position: 5,
+        required: false,
+        label: 'Display Order',
+      },
+      coverImg: {
+        type: 'image',
+        width: '50%',
+        position: 6,
+        required: false,
+        label: 'Cover Image',
+      },
+      icon: {
+        type: 'text',
+        width: '50%',
+        position: 7,
+        required: false,
+        maxLength: 60,
+        label: 'Icon (Lucide key or emoji)',
+      },
+      tours: {
+        type: 'relation[]',
+        ref: 'Tour',
+        optionsEndpoint: '/api/tour/moderation',
+        width: '50%',
+        position: 8,
+        required: false,
+        label: 'Tours in this Category / Region',
+        visibleIf: (values) =>
+          values?.type === 'tour_group' || values?.type === 'region',
       },
       blogs: {
         type: 'unidirectionalRelation[]',
@@ -429,13 +494,14 @@ const uiSchemas = [
         toType: 'Blog',
         ref: 'Blog',
         width: '50%',
-        position: 2,
+        position: 9,
         required: false,
+        visibleIf: (values) => values?.type === 'general',
       },
       status: {
         type: 'enumDropdown',
         width: '50%',
-        position: 3,
+        position: 10,
         required: false,
         default: 'draft',
         enumValues: ['draft', 'published', 'rejected'],
@@ -444,14 +510,14 @@ const uiSchemas = [
         type: 'relation',
         ref: 'User',
         width: '50%',
-        position: 4,
+        position: 11,
         required: false,
       },
       extras: {
         type: 'object',
         fields: [],
         width: '100%',
-        position: 5,
+        position: 12,
         required: false,
       },
     },
@@ -1441,11 +1507,44 @@ const uiSchemas = [
         position: 18,
         required: false,
       },
+      categories: {
+        type: 'relation[]',
+        ref: 'Category',
+        optionsEndpoint: '/api/categories/moderation',
+        filter: {
+          types: 'tour_group,region',
+        },
+        mapOptions: (rows = []) =>
+          rows.map((row) => {
+            const typeLabel =
+              row?.type === 'region'
+                ? 'Region'
+                : row?.type === 'tour_group'
+                  ? 'Category'
+                  : 'Category';
+            const parentName =
+              row?.type === 'region'
+                ? row?.parentCategory?.name || row?.parentCategory?.tag || ''
+                : '';
+
+            return {
+              id: row?.id ?? row?._id,
+              name: parentName
+                ? `${row?.name || row?.tag} (${typeLabel} • ${parentName})`
+                : `${row?.name || row?.tag} (${typeLabel})`,
+              _raw: row,
+            };
+          }),
+        width: '50%',
+        position: 19,
+        required: false,
+        label: 'Tour Categories / Regions',
+      },
       testimonials: {
         type: 'relation[]',
         ref: 'Testimonial',
         width: '50%',
-        position: 19,
+        position: 20,
         required: false,
       },
       tourType: {
@@ -1508,6 +1607,13 @@ const uiSchemas = [
             required: true,
             minLength: 2,
             maxLength: 120,
+          },
+          {
+            key: 'group.coverImg',
+            label: 'Cover Image',
+            type: 'image',
+            width: '50%',
+            required: false,
           },
           {
             key: 'group.destinations',

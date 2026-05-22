@@ -36,6 +36,7 @@ export default function RelationInput({
   multiple = false,
   value,
   onChange,
+  fieldKey,
   label,
   placeholder = "Add relation for ",
   listMaxHeight = "12rem",
@@ -48,6 +49,8 @@ export default function RelationInput({
   searchQuery,
   ...props
 }) {
+  const targetKey = fieldKey || label;
+
   const [open, setOpen] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(pages);
@@ -97,9 +100,9 @@ export default function RelationInput({
 
     if (multiple) {
       if (isSelectedId(id)) return;
-      onChange(label, [...selectedIds, id]);
+      onChange(targetKey, [...selectedIds, id]);
     } else {
-      onChange(label, id);
+      onChange(targetKey, id);
       setOpen(false);
     }
   };
@@ -110,9 +113,9 @@ export default function RelationInput({
     if (multiple) {
       const next = selectedIds.slice();
       next.splice(index, 1);
-      onChange(label, next.length > 0 ? next : null);
+      onChange(targetKey, next.length > 0 ? next : null);
     } else {
-      onChange(label, null);
+      onChange(targetKey, null);
     }
   };
 
@@ -126,7 +129,7 @@ export default function RelationInput({
 
     const [item] = next.splice(index, 1);
     next.splice(target, 0, item);
-    onChange(label, next);
+    onChange(targetKey, next);
   };
 
   React.useEffect(() => {

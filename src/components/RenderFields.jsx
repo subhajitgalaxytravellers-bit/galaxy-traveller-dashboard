@@ -42,7 +42,7 @@ const renderField = (
         <TextField
           value={val ?? ""}
           onChange={setVal}
-          placeholder={`${pretty}`}
+          placeholder={mergeField.placeholder || `${pretty}`}
           field={field}
         />
       );
@@ -53,7 +53,7 @@ const renderField = (
           value={val ?? ""}
           onChange={setVal}
           field={field}
-          placeholder={`${pretty}`}
+          placeholder={mergeField.placeholder || `${pretty}`}
         />
       );
 
@@ -64,7 +64,7 @@ const renderField = (
           value={val ?? ""}
           field={field}
           onChange={setVal}
-          placeholder={`${pretty}`}
+          placeholder={mergeField.placeholder || `${pretty}`}
         />
       );
 
@@ -77,6 +77,8 @@ const renderField = (
           onChange={setVal}
           label={label}
           className={mergeField.className}
+          helperText={mergeField.helperText}
+          placeholder={mergeField.placeholder || 'Select...'}
         />
       );
 
@@ -86,7 +88,7 @@ const renderField = (
           field={field}
           value={val ?? ""}
           onChange={setVal}
-          placeholder={`${pretty}`}
+          placeholder={mergeField.placeholder || `${pretty}`}
         />
       );
 
@@ -183,11 +185,11 @@ const renderField = (
           <PrimitiveArrayField
             elementType={base || "string"}
             field={field}
-            value={Array.isArray(val) ? val : []}
-            onChange={setVal}
-            placeholder={`Add ${pretty}`}
-          />
-        );
+          value={Array.isArray(val) ? val : []}
+          onChange={setVal}
+          placeholder={mergeField.placeholder || `Add ${pretty}`}
+        />
+      );
       }
       // fallback read-only
       return (

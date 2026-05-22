@@ -467,7 +467,7 @@ function buildColumns(modelDef, can) {
 
     // Skip image fields for specific models
     const currentModel = (modelDef?.key || modelDef?.modelKey || '').toLowerCase();
-    const hideImageModels = ['tour', 'tours', 'destination', 'destinations', 'blog', 'blogs'];
+    const hideImageModels = ['tour', 'tours', 'destination', 'destinations', 'blog', 'blogs', 'category', 'categories'];
     if (hideImageModels.includes(currentModel) && (type === 'image' || type === 'image[]' || type === 'images')) {
       return;
     }
