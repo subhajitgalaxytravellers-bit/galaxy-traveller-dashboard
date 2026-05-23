@@ -192,11 +192,11 @@ export default function MainLayout() {
   const sections = appSections;
   const globalName = String(
     global?.name ??
-      global?.siteName ??
-      global?.brandName ??
-      'Galaxy Travel',
+    global?.siteName ??
+    global?.brandName ??
+    'Galaxy Travellers',
   ).trim();
-  const sidebarTitle = `${globalName || 'Galaxy Travel'}.`;
+  const sidebarTitle = `${globalName || 'Galaxy Travellers'}.`;
 
   return (
     <SidebarProvider>

@@ -53,7 +53,7 @@ export default function AuthPage() {
               </svg>
             </div>
             <span className='text-white font-semibold text-lg tracking-tight'>
-              Galaxy Travel
+              Galaxy Travellers
             </span>
           </div>
 
@@ -106,7 +106,7 @@ export default function AuthPage() {
             </svg>
           </div>
           <span className='text-gray-900 dark:text-white font-bold text-lg'>
-            Galaxy Travel
+            Galaxy Travellers
           </span>
         </div>
 

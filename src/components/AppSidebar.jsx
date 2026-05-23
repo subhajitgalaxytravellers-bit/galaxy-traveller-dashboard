@@ -13,7 +13,7 @@ import { NavUser } from "@/components/NavUser";
  * - brandHref: optional href for header brand link (default "/"); pass null to render plain text
  */
 export default function AppSidebar({
-  title = "Galaxy Travel.",
+  title = "Galaxy Travellers.",
   sections = [],
   user = null,
   brandHref = "/",
@@ -58,8 +58,8 @@ export default function AppSidebar({
         ? "translate-x-0"
         : "-translate-x-full"
       : collapsed
-      ? "w-0"
-      : "w-64",
+        ? "w-0"
+        : "w-64",
   ].join(" ");
 
   return (
@@ -79,9 +79,8 @@ export default function AppSidebar({
       >
         {/* Header */}
         <div
-          className={`flex items-center h-16 ${
-            collapsed ? "px-0" : "px-5"
-          } border-b border-gray-200 dark:border-gray-700`}
+          className={`flex items-center h-16 ${collapsed ? "px-0" : "px-5"
+            } border-b border-gray-200 dark:border-gray-700`}
         >
           {!collapsed && (
             <div className="text-lg font-bold text-gray-900 dark:text-gray-100 tracking-tight">
@@ -96,9 +95,8 @@ export default function AppSidebar({
 
         {/* Body */}
         <div
-          className={`flex-1 overflow-y-auto overflow-x-hidden py-4 custom-y-scroll space-y-4 ${
-            collapsed ? "px-0" : "px-2 md:px-4"
-          }`}
+          className={`flex-1 overflow-y-auto overflow-x-hidden py-4 custom-y-scroll space-y-4 ${collapsed ? "px-0" : "px-2 md:px-4"
+            }`}
         >
           {!collapsed && (
             <div className="px-1">
