@@ -55,8 +55,11 @@ export default function SettingsPage() {
   const [footerContact, setFooterContact] = useState({
     contact1: '',
     contact2: '',
-    email: '',
-    location: '',
+    email1: '',
+    email2: '',
+    location1: '',
+    location2: '',
+    location3: '',
     brief: '',
   });
 
@@ -156,6 +159,14 @@ export default function SettingsPage() {
           setFooterContact((prev) => ({
             ...prev,
             ...(settingsData.footerContact || {}),
+            email1:
+              settingsData?.footerContact?.email1 ||
+              settingsData?.footerContact?.email ||
+              '',
+            location1:
+              settingsData?.footerContact?.location1 ||
+              settingsData?.footerContact?.location ||
+              '',
           }));
           setRazorpay((prev) => ({ ...prev, ...(settingsData.razorpay || {}) }));
           setInvoice((prev) => ({
@@ -562,19 +573,49 @@ export default function SettingsPage() {
                 }
               />
               <Input
-                placeholder='Email'
-                value={footerContact.email || ''}
+                placeholder='Email 1'
+                value={footerContact.email1 || ''}
                 onChange={(e) =>
-                  setFooterContact({ ...footerContact, email: e.target.value })
+                  setFooterContact({ ...footerContact, email1: e.target.value })
                 }
               />
               <Input
-                placeholder='Location'
-                value={footerContact.location || ''}
+                placeholder='Email 2'
+                value={footerContact.email2 || ''}
                 onChange={(e) =>
                   setFooterContact({
                     ...footerContact,
-                    location: e.target.value,
+                    email2: e.target.value,
+                  })
+                }
+              />
+              <Input
+                placeholder='Location 1'
+                value={footerContact.location1 || ''}
+                onChange={(e) =>
+                  setFooterContact({
+                    ...footerContact,
+                    location1: e.target.value,
+                  })
+                }
+              />
+              <Input
+                placeholder='Location 2'
+                value={footerContact.location2 || ''}
+                onChange={(e) =>
+                  setFooterContact({
+                    ...footerContact,
+                    location2: e.target.value,
+                  })
+                }
+              />
+              <Input
+                placeholder='Location 3'
+                value={footerContact.location3 || ''}
+                onChange={(e) =>
+                  setFooterContact({
+                    ...footerContact,
+                    location3: e.target.value,
                   })
                 }
               />
